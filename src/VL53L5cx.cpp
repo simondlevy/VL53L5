@@ -21,7 +21,9 @@ VL53L5cx::VL53L5cx(
 {
     _lpn_pin = lpnPin;
 
-    _dev.platform.address = deviceAddress;
+    _dev_addr = deviceAddress;
+
+    _dev.platform.address = VL53L5CX_DEFAULT_I2C_ADDRESS;
 
     _resolution = resolution;
     _target_order = targetOrder;
@@ -99,6 +101,14 @@ void VL53L5cx::init(void)
     // Reset the sensor by toggling the LPN pin
     Reset_Sensor(_lpn_pin);
 
+    // Set the I2C address
+    if(_dev.platform.address != _dev_addr) {
+        uint8_t error = vl53l5cx_set_i2c_address(&_dev, _dev_addr);
+        if(error) {
+            Debugger::reportForever("VL53L5CX failed to set I2C address");
+        }
+    }
+
     // Make sure there is a VL53L5CX sensor connected
     uint8_t isAlive = 0;
     uint8_t error = vl53l5cx_is_alive(&_dev, &isAlive);
@@ -130,6 +140,8 @@ void VL53L5cx::check_ranging_frequency(resolution_t resolution,
                                        uint8_t maxval,
                                        const char *label)
 {
+    (void)resolution;
+    (void)label;
     if (_ranging_frequency < 1 || _ranging_frequency > maxval) {
         Debugger::reportForever("Ranging frequency for %s resolution " 
                 "must be at least 1 and no more than %d", maxval);
@@ -255,6 +267,7 @@ void VL53L5cx::getXtalkCalibrationData(VL53L5cx::XtalkCalibrationData & data)
 
 void VL53L5cx::setXtalkCalibrationData(VL53L5cx::XtalkCalibrationData & data)
 {
+    (void)data;
 }
 
 VL53L5cxAutonomous::VL53L5cxAutonomous(
